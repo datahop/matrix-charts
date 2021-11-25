@@ -60,7 +60,7 @@ type BatteryMeasurements struct {
 type Measurement struct {
 	DataTransfer       string `json:"DataTransfer"`
 	TransferInterval   string `json:"TransferInterval"`
-	BatteryConsumption string `json:"Battery Consumption"`
+	BatteryConsumption int    `json:"Battery Consumption"`
 }
 
 var matrixFiles = []string{"zero_host_downloader", "zero_client_uploader", "five_host_downloader", "five_client_uploader"}
@@ -102,6 +102,7 @@ func renderBatteryMeasurementPage(pageName string) error {
 	page := components.NewPage()
 	page.AddCharts(
 		transferIntervalToBatteryPercentage(data),
+		transferIntervalToBatteryPercentageOnlyDatahop(data),
 	)
 	page.PageTitle = "Datahop Battery Measurement Charts"
 	f, err := os.Create(fmt.Sprintf("html/%s.html", pageName))
@@ -116,7 +117,9 @@ func transferIntervalToBatteryPercentage(data *BatteryMeasurements) *charts.Bar 
 	bar := charts.NewBar()
 	// set some global options like Title/Legend/ToolTip or anything else
 	bar.SetGlobalOptions(
-		charts.WithTitleOpts(opts.Title{Title: "Battery Consumption after 3 hours of transfer"}),
+		charts.WithTitleOpts(opts.Title{
+			Title: "Battery Consumption of device after 3 hours of transfer",
+		}),
 		charts.WithTooltipOpts(opts.Tooltip{Show: true}),
 		charts.WithLegendOpts(opts.Legend{Show: true, Left: "80%"}),
 	)
@@ -129,6 +132,43 @@ func transferIntervalToBatteryPercentage(data *BatteryMeasurements) *charts.Bar 
 		}
 		if v.DataTransfer == "100" {
 			hundredMbItems = append(hundredMbItems, opts.BarData{Value: v.BatteryConsumption})
+		}
+	}
+	// Put data into instance
+	bar.SetXAxis([]string{"40s", "120s"}).
+		AddSeries("10Mb", tenMbItems).
+		AddSeries("100Mb", hundredMbItems).
+		SetSeriesOptions(
+			charts.WithLabelOpts(opts.Label{
+				Show:     true,
+				Position: "insideTop",
+			}),
+		)
+
+	return bar
+}
+
+func transferIntervalToBatteryPercentageOnlyDatahop(data *BatteryMeasurements) *charts.Bar {
+	// create a new bar instance
+	bar := charts.NewBar()
+	// set some global options like Title/Legend/ToolTip or anything else
+	bar.SetGlobalOptions(
+		charts.WithTitleOpts(opts.Title{
+			Title:    "Battery Consumption by datahop demo app after 3 hours of transfer",
+			Subtitle: "Idle Device consumed 2% after 3 hours",
+		}),
+		charts.WithTooltipOpts(opts.Tooltip{Show: true}),
+		charts.WithLegendOpts(opts.Legend{Show: true, Left: "80%"}),
+	)
+	tenMbItems := make([]opts.BarData, 0)
+	hundredMbItems := make([]opts.BarData, 0)
+	for _, v := range data.BatteryMeasurement {
+		if v.DataTransfer == "10" {
+			tenMbItems = append(tenMbItems, opts.BarData{Value: v.BatteryConsumption - 2})
+			continue
+		}
+		if v.DataTransfer == "100" {
+			hundredMbItems = append(hundredMbItems, opts.BarData{Value: v.BatteryConsumption - 2})
 		}
 	}
 	// Put data into instance

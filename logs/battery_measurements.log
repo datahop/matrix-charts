@@ -3,22 +3,22 @@
         {
              "DataTransfer": "10",
              "TransferInterval": "40",
-             "Battery Consumption": "9"
+             "Battery Consumption": 9
         },
         {
              "DataTransfer": "100",
              "TransferInterval": "40",
-             "Battery Consumption": "24"
+             "Battery Consumption": 24
         },
         {
              "DataTransfer": "10",
              "TransferInterval": "120",
-             "Battery Consumption": "5"
+             "Battery Consumption": 5
         },
         {
              "DataTransfer": "100",
              "TransferInterval": "120",
-             "Battery Consumption": "11"
+             "Battery Consumption": 11
         }
     ]
 }
