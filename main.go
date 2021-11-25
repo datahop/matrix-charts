@@ -189,7 +189,7 @@ func bleToWifi(data *matrix) *charts.Line {
 			},
 		),
 		charts.WithTooltipOpts(opts.Tooltip{Show: true}),
-		charts.WithLegendOpts(opts.Legend{Right: "80%"}),
+		charts.WithLegendOpts(opts.Legend{Show: true, Left: "80%"}),
 	)
 	xAxis := []int{}
 	yAxis := make([]opts.LineData, 0)
@@ -234,7 +234,7 @@ func bleToIpfs(data *matrix) *charts.Line {
 			},
 		),
 		charts.WithTooltipOpts(opts.Tooltip{Show: true}),
-		charts.WithLegendOpts(opts.Legend{Right: "80%"}),
+		charts.WithLegendOpts(opts.Legend{Show: true, Left: "80%"}),
 	)
 	xAxis := []int{}
 	yAxis := make([]opts.LineData, 0)
@@ -272,7 +272,7 @@ func rssiSpeed(data *matrix) *charts.Parallel {
 		}),
 		charts.WithParallelAxisList(parallelAxisList),
 		charts.WithTooltipOpts(opts.Tooltip{Show: true}),
-		charts.WithLegendOpts(opts.Legend{Right: "80%"}),
+		charts.WithLegendOpts(opts.Legend{Show: true, Left: "80%"}),
 	)
 	items := make([]opts.ParallelData, 0)
 	for _, v := range data.NodeMatrix {
@@ -303,7 +303,7 @@ func downloadSpeed(data *matrix) *charts.Line {
 			},
 		),
 		charts.WithTooltipOpts(opts.Tooltip{Show: true}),
-		charts.WithLegendOpts(opts.Legend{Right: "80%"}),
+		charts.WithLegendOpts(opts.Legend{Show: true, Left: "80%"}),
 	)
 	xAxis := []int{}
 	yAxis := make([]opts.LineData, 0)
