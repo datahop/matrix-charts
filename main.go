@@ -54,12 +54,28 @@ type matrix struct {
 	NodeMatrix    map[string]DiscoveredNodeMatrix
 	TotalUptime   int64
 }
+type BatteryMeasurements struct {
+	BatteryMeasurement []Measurement `json:"BatteryMeasurement"`
+}
+type Measurement struct {
+	DataTransfer       string `json:"DataTransfer"`
+	TransferInterval   string `json:"TransferInterval"`
+	BatteryConsumption string `json:"Battery Consumption"`
+}
 
-var files = []string{"zero_host_downloader", "zero_client_uploader", "five_host_downloader", "five_client_uploader"}
+var matrixFiles = []string{"zero_host_downloader", "zero_client_uploader", "five_host_downloader", "five_client_uploader"}
+var batteryMeasurementFiles = []string{"battery_measurements"}
 
 func main() {
-	for _, v := range files {
-		err := renderPage(v)
+	for _, v := range matrixFiles {
+		err := renderMatrixPage(v)
+		if err != nil {
+			log.Fatal("Page render failed ", err.Error())
+		}
+	}
+
+	for _, v := range batteryMeasurementFiles {
+		err := renderBatteryMeasurementPage(v)
 		if err != nil {
 			log.Fatal("Page render failed ", err.Error())
 		}
@@ -73,7 +89,63 @@ func main() {
 	}))
 }
 
-func renderPage(pageName string) error {
+func renderBatteryMeasurementPage(pageName string) error {
+	file, err := ioutil.ReadFile(fmt.Sprintf("logs/%s.log", pageName))
+	if err != nil {
+		log.Fatal("matrix file missing ", err.Error())
+	}
+	data := &BatteryMeasurements{}
+	err = json.Unmarshal(file, data)
+	if err != nil {
+		log.Fatal("matrix file missing ", err.Error())
+	}
+	page := components.NewPage()
+	page.AddCharts(
+		transferIntervalToBatteryPercentage(data),
+	)
+	page.PageTitle = "Datahop Battery Measurement Charts"
+	f, err := os.Create(fmt.Sprintf("html/%s.html", pageName))
+	if err != nil {
+		log.Fatal("unable to create file ", err.Error())
+	}
+	return page.Render(io.MultiWriter(f))
+}
+
+func transferIntervalToBatteryPercentage(data *BatteryMeasurements) *charts.Bar {
+	// create a new bar instance
+	bar := charts.NewBar()
+	// set some global options like Title/Legend/ToolTip or anything else
+	bar.SetGlobalOptions(
+		charts.WithTitleOpts(opts.Title{Title: "Battery Consumption after 3 hours of transfer"}),
+		charts.WithTooltipOpts(opts.Tooltip{Show: true}),
+		charts.WithLegendOpts(opts.Legend{Show: true, Left: "80%"}),
+	)
+	tenMbItems := make([]opts.BarData, 0)
+	hundredMbItems := make([]opts.BarData, 0)
+	for _, v := range data.BatteryMeasurement {
+		if v.DataTransfer == "10" {
+			tenMbItems = append(tenMbItems, opts.BarData{Value: v.BatteryConsumption})
+			continue
+		}
+		if v.DataTransfer == "100" {
+			hundredMbItems = append(hundredMbItems, opts.BarData{Value: v.BatteryConsumption})
+		}
+	}
+	// Put data into instance
+	bar.SetXAxis([]string{"40s", "120s"}).
+		AddSeries("10Mb", tenMbItems).
+		AddSeries("100Mb", hundredMbItems).
+		SetSeriesOptions(
+			charts.WithLabelOpts(opts.Label{
+				Show:     true,
+				Position: "insideTop",
+			}),
+		)
+
+	return bar
+}
+
+func renderMatrixPage(pageName string) error {
 	file, err := ioutil.ReadFile(fmt.Sprintf("logs/%s.log", pageName))
 	if err != nil {
 		log.Fatal("matrix file missing ", err.Error())
@@ -116,6 +188,8 @@ func bleToWifi(data *matrix) *charts.Line {
 				Name: "Seconds",
 			},
 		),
+		charts.WithTooltipOpts(opts.Tooltip{Show: true}),
+		charts.WithLegendOpts(opts.Legend{Right: "80%"}),
 	)
 	xAxis := []int{}
 	yAxis := make([]opts.LineData, 0)
@@ -159,6 +233,8 @@ func bleToIpfs(data *matrix) *charts.Line {
 				Name: "Seconds",
 			},
 		),
+		charts.WithTooltipOpts(opts.Tooltip{Show: true}),
+		charts.WithLegendOpts(opts.Legend{Right: "80%"}),
 	)
 	xAxis := []int{}
 	yAxis := make([]opts.LineData, 0)
@@ -195,6 +271,8 @@ func rssiSpeed(data *matrix) *charts.Parallel {
 			Title: "RSSI Speed",
 		}),
 		charts.WithParallelAxisList(parallelAxisList),
+		charts.WithTooltipOpts(opts.Tooltip{Show: true}),
+		charts.WithLegendOpts(opts.Legend{Right: "80%"}),
 	)
 	items := make([]opts.ParallelData, 0)
 	for _, v := range data.NodeMatrix {
@@ -224,6 +302,8 @@ func downloadSpeed(data *matrix) *charts.Line {
 				Name: "MBps",
 			},
 		),
+		charts.WithTooltipOpts(opts.Tooltip{Show: true}),
+		charts.WithLegendOpts(opts.Legend{Right: "80%"}),
 	)
 	xAxis := []int{}
 	yAxis := make([]opts.LineData, 0)
